@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+numpy
+python-dotenv
+google-api-python-client
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+pinecone[grpc]==5.1.0
+langchain==0.2.15
+langchain-openai==0.1.23
+langchain-pinecone==0.1.2
+langchain_community
+langchain_text_splitters
