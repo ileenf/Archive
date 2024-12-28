@@ -2,6 +2,9 @@ from pinecone.grpc import PineconeGRPC as Pinecone
 from pinecone import ServerlessSpec
 import time
 
+from backend.app.logger_config import setup_logger
+
+logger = setup_logger(__name__)
 
 class PineconeClient:
     def __init__(self, api_key):
@@ -22,16 +25,23 @@ class PineconeClient:
         )
         self.poll_for_index_creation_convergence(index_name)
 
-    def poll_for_index_update_convergence(self, index_name, new_count):
+    def poll_for_index_update_convergence(self, index_name, expected_total_count, max_retries=10, wait_time_secs=2):
         index = self.client.Index(index_name)
-        stats = index.describe_index_stats()
-        current_count = stats["total_vector_count"]
-        target_count = current_count + new_count
 
-        while current_count != target_count:
+        retries = 0
+        while retries < max_retries:
             stats = index.describe_index_stats()
             current_count = stats["total_vector_count"]
-            time.sleep(2)
+
+            if current_count >= expected_total_count:
+                logger.info("Successfully updated index.")
+                return True
+
+            time.sleep(wait_time_secs)
+            retries += 1
+
+        logger.error(f"Error: index update did not converge to expected total record count: {expected_total_count}")
+        return False
 
     def poll_for_index_creation_convergence(self, index_name):
         while not self.client.describe_index(index_name).status['ready']:
